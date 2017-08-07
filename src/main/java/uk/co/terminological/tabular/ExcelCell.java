@@ -1,4 +1,4 @@
-package uk.co.terminological.excel;
+package uk.co.terminological.tabular;
 
 import java.util.Date;
 
