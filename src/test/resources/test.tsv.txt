@@ -1,0 +1,9 @@
+id	make	model	colour
+1	Toyota	Avensis	Silver
+2	Fiat	Uno	White
+3	Fiat	Punto	Green
+4	Saab	9000	Silver
+5	Mazda	"""Sport"""	Silver
+6	Saab	900	Grey
+7	Aston Martin	Vantage	Black
+8	Jaguar	"E-type, used"	Green

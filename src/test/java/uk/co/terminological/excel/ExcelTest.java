@@ -11,7 +11,7 @@ public class ExcelTest {
 
 	public static void main(String[] args) throws IOException, NoMatchException {
 		
-		String file = ExcelTest.class.getResource("/test.xlsx").getFile();
+		String file = ExcelTest.class.getResource("/excel_test.xlsx").getFile();
 		
 		Excel xl = Excel.fromFile(new File(file));
 		

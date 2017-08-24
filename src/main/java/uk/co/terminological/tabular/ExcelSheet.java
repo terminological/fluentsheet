@@ -5,6 +5,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Stream;
 
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.Row;
@@ -12,6 +13,7 @@ import org.apache.poi.ss.usermodel.Sheet;
 
 import uk.co.terminological.datatypes.EavMap;
 import uk.co.terminological.datatypes.NoMatchException;
+import uk.co.terminological.datatypes.Triple;
 import uk.co.terminological.datatypes.Tuple;
 
 /**
@@ -23,9 +25,9 @@ import uk.co.terminological.datatypes.Tuple;
 public class ExcelSheet {
 
 	private Sheet sheet;
-	private EavMap<Integer,Integer,String> rowCache = null;
-	private EavMap<Integer,Integer,String> colCache = null;
-	private Metadata meta;
+	private EavMap<Long,Integer,String> rowCache = null;
+	private EavMap<Long,Integer,String> colCache = null;
+	private Content meta;
 
 	private static Pattern pat = Pattern.compile("^([A-Z][A-Z]*)([1-9][0-9]*)$");
 
@@ -36,14 +38,14 @@ public class ExcelSheet {
 	 */
 	protected ExcelSheet(Sheet sheet) {
 		this.sheet = sheet;
-		this.meta = new Metadata(this);
+		this.meta = new Content(this);
 	}
 
 	/**
 	 * Overriding of default configuration
 	 * @return
 	 */
-	public Metadata with() {
+	public Content with() {
 		return meta;
 	}
 
@@ -58,13 +60,16 @@ public class ExcelSheet {
 	 * Numbering is zero based.
 	 * This method caches the result.
 	 */
-	public EavMap<Integer,Integer,String> getContentsByRow() {
+	public EavMap<Long,Integer,String> getContentsByRow() {
 		if (rowCache == null) {
 			fillCaches();
 		}
 		return rowCache;
 	}
 
+	public Stream<Triple<Long,Integer,String>> streamContentsByRow() {
+		return getContentsByRow().stream();
+	}
 
 
 	/**
@@ -73,11 +78,20 @@ public class ExcelSheet {
 	 * Numbering is zero based.
 	 * This method caches the result.
 	 */
-	public EavMap<Integer,Integer,String> getContentsByColumn() {
+	public EavMap<Long,Integer,String> getContentsByColumn() {
 		if (colCache == null) {
 			fillCaches();
 		}
 		return colCache;
+	}
+	
+	/**
+	 * returns a column based stream of column index, row index, value for non empty cells
+	 * in the spreadsheet
+	 * @return
+	 */
+	public Stream<Triple<Long,Integer,String>> streamContentsByColumn() {
+		return getContentsByColumn().stream();
 	}
 
 	private void fillCaches() {
@@ -89,25 +103,35 @@ public class ExcelSheet {
 				int rowNum = cell.getRowIndex();
 				String tmp = new ExcelCell(cell).toString();
 				if (tmp != null) {
-					colCache.add(colNum, rowNum, tmp);
-					rowCache.add(rowNum, colNum, tmp);
+					colCache.add(Integer.toUnsignedLong(colNum), rowNum, tmp);
+					rowCache.add(Integer.toUnsignedLong(rowNum), colNum, tmp);
 				}
 			}
 		}
 	}
 
 	/**
-	 * converts a sheet to a EAV map based on header labels  
+	 * A stream of labelled values
+	 * @return
+	 */
+	public Stream<Triple<String,String,String>> streamContents() {
+		return getContents().stream();
+	}
+	
+	/**
+	 * converts a sheet to a EAV map based on header labels.
+	 * Only non empty / non blank cells will be present here. 
+	 * i.e. missing values in the sheet will not be in this map.   
 	 * @return
 	 */
 	public EavMap<String,String,String> getContents() {
 
 		EavMap<String,String,String> out = new EavMap<>();
-		EavMap<Integer,Integer,String> tmp = meta.getRawContents();
+		EavMap<Long,Integer,String> tmp = meta.getRawContents();
 		Optional<Map<Integer,String>> labels = meta.getLabels();
 
 		//iterate by raw entity (e.g. by row if vertical)
-		for (Integer rawEnt: tmp.getEntitySet() ) {
+		for (Long rawEnt: tmp.getEntitySet() ) {
 
 			//Integer rawEnt = eav.getKey();
 			//don't map if the cell is outside of the start range
@@ -183,9 +207,9 @@ public class ExcelSheet {
 
 	//Configuration metadata object
 
-	public static class Metadata {
+	public static class Content {
 
-		protected Metadata(ExcelSheet sheet) {
+		protected Content(ExcelSheet sheet) {
 			this.sheet = sheet;
 		}
 
@@ -195,23 +219,23 @@ public class ExcelSheet {
 		private int xOrigin = 0;
 		private int yOrigin = 0;
 		private Optional<Integer> idLabel = Optional.of(0); //entity id is in first column (vertical) / row (horizontal)
-		private Map<Integer,String> labelMap;
+		private Map<Integer,String> labelMap; //maybe discontinuous and not zero based
 
 		protected Optional<Map<Integer,String>> getLabels() {
 			if (!attributes.equals(Labelling.LABELLED)) return Optional.empty();
 			if (labelMap == null) {
 				if (orientation.equals(Orientation.HORIZONTAL)) {
-					EavMap<Integer,Integer,String> raw = sheet.getContentsByColumn();
-					labelMap = raw.get(xOrigin);
+					EavMap<Long,Integer,String> raw = sheet.getContentsByColumn();
+					labelMap = raw.get(Integer.toUnsignedLong(xOrigin));
 				} else {
-					EavMap<Integer,Integer,String> raw = sheet.getContentsByRow();
-					labelMap = raw.get(yOrigin);
+					EavMap<Long,Integer,String> raw = sheet.getContentsByRow();
+					labelMap = raw.get(Integer.toUnsignedLong(yOrigin));
 				}
 			}
 			return Optional.of(labelMap);
 		}
 
-		protected EavMap<Integer,Integer,String> getRawContents() {
+		protected EavMap<Long,Integer,String> getRawContents() {
 			if (orientation.equals(Orientation.HORIZONTAL)) {
 				return sheet.getContentsByColumn();
 			} else {
@@ -239,7 +263,7 @@ public class ExcelSheet {
 			return idLabel.map(i -> getRawAttributeStart()+i);
 		}
 
-		public Metadata origin(String A1) throws NoMatchException {
+		public Content origin(String A1) throws NoMatchException {
 			cellReftoCoordinates(A1).consume(xy -> {
 				xOrigin = xy.getFirst();
 				yOrigin = xy.getSecond();
@@ -247,7 +271,7 @@ public class ExcelSheet {
 			return this;
 		}
 
-		public Metadata withLabels(String... strings) {
+		public Content withLabels(String... strings) {
 			int i = getRawAttributeStart();
 			labelMap = new HashMap<>();
 			for (String string: strings) {
@@ -257,47 +281,50 @@ public class ExcelSheet {
 			return this;
 		}
 
-		public Metadata identifiers(String label) {
+		public Content identifiers(String label) {
 			idLabel = labelMap.entrySet().stream().filter(kv -> kv.getValue().equals(label)).findFirst().map(kv -> kv.getKey());
 			return this;
 		}
 
-		public Metadata identifiers(int rowOrColumnOffset) {
+		public Content identifiers(int rowOrColumnOffset) {
 			idLabel = Optional.of(rowOrColumnOffset+
 					(orientation.equals(Orientation.HORIZONTAL) ? yOrigin : xOrigin)
 					);
 			return this;
 		}
 
-		public Metadata identifiers() {
+		public Content identifiers() {
 			return identifiers(0);
 		}
 
-		public Metadata noIdentifiers() {
+		public Content noIdentifiers() {
 			idLabel = Optional.empty();
 			return this;
 		}
 
-		public Metadata headerLabels() {
+		public Content headerLabels() {
 			attributes = Labelling.LABELLED;
 			return this;
 		}
 
-		public Metadata noHeaderLabels() {
+		public Content noHeaderLabels() {
 			attributes = Labelling.LABELLED;
 			return this;
 		}
 
-		public Metadata horizontal() {
+		public Content horizontal() {
 			orientation = Orientation.HORIZONTAL;
 			return this;
 		}
 
-		public Metadata vertical() {
+		public Content vertical() {
 			orientation = Orientation.VERTICAL;
 			return this;
 		}
 
+		public ExcelSheet begin() {
+			return sheet;
+		}
 	}
 
 	public static enum Labelling {
