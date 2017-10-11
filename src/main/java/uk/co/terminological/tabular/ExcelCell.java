@@ -8,7 +8,7 @@ import org.apache.poi.ss.usermodel.DateUtil;
 import org.apache.poi.ss.usermodel.FormulaEvaluator;
 import org.apache.poi.ss.usermodel.Workbook;
 
-import uk.co.terminological.datatypes.DateFormatString;
+import uk.co.terminological.mappers.DateFormatString;
 
 public class ExcelCell {
 	

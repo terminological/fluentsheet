@@ -3,7 +3,7 @@
  */
 package uk.co.terminological.excel.tabular;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.fail;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -12,7 +12,7 @@ import java.io.IOException;
 import org.junit.Before;
 import org.junit.Test;
 
-import uk.co.terminological.datatypes.DelimitedParser.MalformedCSVException;
+import uk.co.terminological.parser.StateMachineException;
 import uk.co.terminological.tabular.Delimited;
 import uk.co.terminological.tabular.Delimited.LabelNotAvailableException;
 
@@ -39,12 +39,12 @@ public class DelimitedTest {
 	 * @throws IOException 
 	 * @throws FileNotFoundException 
 	 * @throws LabelNotAvailableException 
+	 * @throws StateMachineException 
 	 * @throws MalformedCSVException 
 	 */
 	@Test
-	public final void testFromFile() throws LabelNotAvailableException, FileNotFoundException, IOException, MalformedCSVException {
+	public final void testFromFile() throws LabelNotAvailableException, FileNotFoundException, IOException, StateMachineException {
 		Delimited d = Delimited.fromFile(mysqlCsv)
-				.optionalEnclosed("\"")
 				.csv()
 				.nullable("NULL")
 				.noIdentifiers()
