@@ -9,8 +9,8 @@ import java.io.InputStreamReader;
 import java.io.Reader;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
@@ -22,7 +22,7 @@ import uk.co.terminological.datatypes.EavMap;
 import uk.co.terminological.datatypes.Triple;
 import uk.co.terminological.datatypes.Tuple;
 import uk.co.terminological.parser.DelimitedParserBuilder;
-import uk.co.terminological.parser.DelimitedParserExecutor;
+import uk.co.terminological.parser.ParserException;
 import uk.co.terminological.parser.StateMachineException;
 import uk.co.terminological.parser.StateMachineExecutor.ErrorHandler;
 
@@ -77,7 +77,7 @@ public class Delimited {
 	 * @return
 	 * @throws MalformedCSVException
 	 */
-	public Stream<Triple<String,String,String>> streamContents() throws StateMachineException {
+	public Stream<Triple<String,String,String>> streamContents() throws ParserException {
 		return getContents().stream();
 	}
 	
@@ -89,9 +89,9 @@ public class Delimited {
 		}
 	}
 	
-	private void cacheContents() throws StateMachineException {
+	private void cacheContents() throws ParserException {
 		while (content.hasNext()) {
-			Deferred<Tuple<Long,List<String>>,StateMachineException> line = content.next();
+			Deferred<Tuple<Long,List<String>>,ParserException> line = content.next();
 			cache.add(line.get());
 		}
 		this.close();
@@ -102,7 +102,7 @@ public class Delimited {
 	 * @return
 	 * @throws IOException 
 	 */
-	public EavMap<String,String,String> getContents() throws StateMachineException {
+	public EavMap<String,String,String> getContents() throws ParserException {
 		cacheContents();
 		EavMap<String,String,String> out = new EavMap<>();
 		for (Tuple<Long,List<String>> line: cache) {
@@ -118,7 +118,7 @@ public class Delimited {
 	 * Numbering is zero based.
 	 * @throws MalformedCSVException 
 	 */
-	public EavMap<Long,Integer,String> getContentsByRow() throws StateMachineException {
+	public EavMap<Long,Integer,String> getContentsByRow() throws ParserException {
 		cacheContents();
 		EavMap<Long,Integer,String> out = new EavMap<>();
 		for (Tuple<Long,List<String>> line: cache) {
@@ -136,7 +136,7 @@ public class Delimited {
 	 * @return
 	 * @throws MalformedCSVException
 	 */
-	public Stream<Triple<Long,Integer,String>> streamContentsByRow() throws StateMachineException {
+	public Stream<Triple<Long,Integer,String>> streamContentsByRow() throws ParserException {
 		return getContentsByRow().stream();
 	}
 
@@ -261,9 +261,9 @@ public class Delimited {
 	 * @author terminological
 	 *
 	 */
-	public static class Content implements Iterator<Deferred<Tuple<Long,List<String>>,StateMachineException>> {
+	public static class Content implements Iterator<Deferred<Tuple<Long,List<String>>,ParserException>> {
 
-		private DelimitedParserExecutor parser;
+		private Iterator<Deferred<List<String>,ParserException>> parser;
 		private boolean labelled = true;
 		private Delimited csv;
 		private Optional<List<String>> labelMap = Optional.empty();
@@ -353,7 +353,7 @@ public class Delimited {
 			if (!labelMap.isPresent()) {
 				try {
 					labelMap = Optional.of(parser.next().get());
-				} catch (NoSuchElementException | StateMachineException e) {
+				} catch (NoSuchElementException | ParserException e) {
 					throw new LabelNotAvailableException(e);
 				}
 			}
@@ -403,7 +403,7 @@ public class Delimited {
 		//empty strings are treated as missing values and omitted for consistency with the 
 		//Excel parser.
 		private Map<String,String> label(List<String> values) {
-			Map<String,String> out = new HashMap<>();
+			Map<String,String> out = new LinkedHashMap<>();
 			Iterator<String> i1 = 
 					labelMap
 						.map(l -> l.iterator())
@@ -451,7 +451,7 @@ public class Delimited {
 		}
 
 		@Override
-		public Deferred<Tuple<Long, List<String>>, StateMachineException> next() {
+		public Deferred<Tuple<Long, List<String>>, ParserException> next() {
 			return parser.next().map(p -> {
 				Content.this.recordNumber +=1;
 				return Tuple.create(Content.this.recordNumber, p);

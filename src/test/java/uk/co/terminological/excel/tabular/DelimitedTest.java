@@ -3,8 +3,6 @@
  */
 package uk.co.terminological.excel.tabular;
 
-import static org.junit.Assert.fail;
-
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -12,7 +10,8 @@ import java.io.IOException;
 import org.junit.Before;
 import org.junit.Test;
 
-import uk.co.terminological.parser.StateMachineException;
+import uk.co.terminological.parser.ParserException;
+
 import uk.co.terminological.tabular.Delimited;
 import uk.co.terminological.tabular.Delimited.LabelNotAvailableException;
 
@@ -43,7 +42,7 @@ public class DelimitedTest {
 	 * @throws MalformedCSVException 
 	 */
 	@Test
-	public final void testFromFile() throws LabelNotAvailableException, FileNotFoundException, IOException, StateMachineException {
+	public final void testFromFile() throws LabelNotAvailableException, FileNotFoundException, IOException, ParserException {
 		Delimited d = Delimited.fromFile(mysqlCsv)
 				.csv()
 				.nullable("NULL")
@@ -55,7 +54,7 @@ public class DelimitedTest {
 
 	/**
 	 * Test method for {@link uk.co.terminological.tabular.Delimited#streamContents()}.
-	 */
+	 *
 	@Test
 	public final void testStreamContents() {
 		fail("Not yet implemented");
@@ -63,7 +62,7 @@ public class DelimitedTest {
 
 	/**
 	 * Test method for {@link uk.co.terminological.tabular.Delimited#getContents()}.
-	 */
+	 *
 	@Test
 	public final void testGetContents() {
 		fail("Not yet implemented");
@@ -71,7 +70,7 @@ public class DelimitedTest {
 
 	/**
 	 * Test method for {@link uk.co.terminological.tabular.Delimited#getContentsByRow()}.
-	 */
+	 *
 	@Test
 	public final void testGetContentsByRow() {
 		fail("Not yet implemented");
@@ -79,10 +78,11 @@ public class DelimitedTest {
 
 	/**
 	 * Test method for {@link uk.co.terminological.tabular.Delimited#streamContentsByRow()}.
-	 */
+	 *
 	@Test
 	public final void testStreamContentsByRow() {
 		fail("Not yet implemented");
 	}
+	*/
 
 }
