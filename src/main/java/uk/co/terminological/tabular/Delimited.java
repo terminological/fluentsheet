@@ -113,6 +113,10 @@ public class Delimited {
 		return out;
 	}
 	
+	public List<String> getHeaders() {
+		return content.labelMap.orElse(null);
+	}
+	
 	/**
 	 * returns a row based EAV map of the contents of the sheet (row E, column A, string of contents V)
 	 * Numbering is zero based.
@@ -125,6 +129,7 @@ public class Delimited {
 			int i=0;
 			for (String value: line.getValue()) {
 				out.add(line.getKey(),  i, value);
+				i++;
 			}
 		}
 		return out;

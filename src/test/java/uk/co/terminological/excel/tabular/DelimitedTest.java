@@ -43,13 +43,24 @@ public class DelimitedTest {
 	 */
 	@Test
 	public final void testFromFile() throws LabelNotAvailableException, FileNotFoundException, IOException, ParserException {
-		Delimited d = Delimited.fromFile(mysqlCsv)
-				.csv()
-				.nullable("NULL")
-				.noIdentifiers()
-				.begin();
-		d.streamContents().forEach(System.out::println);
-		d.close();
+		{
+			Delimited d = Delimited.fromFile(mysqlCsv)
+					.csv()
+					.nullable("NULL")
+					.noIdentifiers()
+					.begin();
+			d.streamContents().forEach(System.out::println);
+			d.close();
+		}
+		{
+			Delimited d = Delimited.fromFile(mysqlCsv)
+					.csv()
+					.nullable("NULL")
+					.noIdentifiers()
+					.begin();
+			d.streamContentsByRow().forEach(System.out::println);
+			d.close();
+		}
 	}
 
 	/**
