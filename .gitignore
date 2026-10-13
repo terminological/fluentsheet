@@ -1,6 +1,9 @@
 .classpath
 .settings/
+.metadata
 .project
+
+.continue
 
 target/
 pom.xml.tag

@@ -35,7 +35,7 @@ public class Excel {
 			out.excel = WorkbookFactory.create(stream);
 		} catch (InvalidFormatException e) {
 			throw new IOException(e);
-		} 
+		}
 		return out;
 	}
 
